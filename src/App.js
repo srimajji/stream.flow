@@ -3,6 +3,7 @@ import logo from "./logo.svg";
 import { Grid, Header, Message, Segment } from "semantic-ui-react";
 import "./App.css";
 import MapView from "./MapView";
+import StreamFlowView from "./StreamFlowView";
 
 class App extends Component {
   constructor() {
@@ -40,7 +41,7 @@ class App extends Component {
                   </Message>
                 </Grid.Column>
                 <Grid.Column>
-                  <MapView
+                  <StreamFlowView
                     latitude={location.coords.latitude}
                     longitude={location.coords.longitude}
                   />

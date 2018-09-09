@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import ReactMapboxGl, { Layer, Feature, GeoJSONLayer } from "react-mapbox-gl";
+import ReactMapboxGl, { Layer, Feature, GeoJSONLayer, Popup } from "react-mapbox-gl";
 import axios from "axios";
 import toGeoJSON from "togeojson";
 import * as MapboxGL from "mapbox-gl";
@@ -32,7 +32,7 @@ const circlePaint: MapboxGL.CirclePaint = {
 const layerPaint = {
     // make circles larger as the user zooms from z12 to z22
     'circle-radius': {
-        'base': 3,
+        'base': 60,
         'stops': [[12, 2], [22, 180]]
     },
     // color circles by ethnicity, using a match expression
@@ -40,16 +40,13 @@ const layerPaint = {
     'circle-color': "#223b53"
 };
 
-class MapView extends Component {
+class StreamFlowView extends Component {
     constructor() {
         super();
         this.state = {
-            upperLat: null,
-            upperLng: null,
-            lowerLat: null,
-            lowerLng: null,
-            geoJSON: null,
+            timeseries: [],
             center: null,
+            active: null,
         }
     }
 
@@ -58,19 +55,21 @@ class MapView extends Component {
         const upperLng = upperBound.lng.toPrecision(3);
         const lowerLat = lowerBound.lat.toPrecision(3);
         const lowerLng = lowerBound.lng.toPrecision(3);
-        axios.get(`http://waterservices.usgs.gov/nwis/iv/?format=json&bBox=${lowerLng},${lowerLat},${upperLng},${upperLat}&format=ge&siteType=ST,LK,ES&hasDataTypeCd=dv`)
+        axios.get(`http://waterservices.usgs.gov/nwis/iv/?format=json&bBox=${lowerLng},${lowerLat},${upperLng},${upperLat}`)
             .then(response => {
-                const xmlData = new DOMParser().parseFromString(response.data, "application/xml");
-                const kml = toGeoJSON.kml(xmlData);
-                this.setState({ geoJSON: kml, center: center });
+                const dataSet = get(response.data.value, "timeSeries");
+                console.log("time series data", dataSet);
+                if (dataSet) {
+                    this.setState({ timeseries: dataSet, center: center });
+                }
             })
             .catch(error => console.error(error));
 
     }
 
-    onClickPoint(e) {
-        console.log("site id: ", get(e.features.pop(), "id"));
-        console.log(e);
+    onClickPoint(dataPoint) {
+        console.log(dataPoint);
+        this.setState({ active: dataPoint });
     }
 
     render() {
@@ -96,29 +95,32 @@ class MapView extends Component {
                     this.getBoundBox(boundBox.getNorthEast(), boundBox.getSouthWest(), e.getCenter());
                 }}
             >
-                {
-                    // this.state.geoJSON ?
-                    // <GeoJSONLayer
-                    //   data={this.state.geoJSON}
-                    //   circleLayout={circleLayout}
-                    //   circlePaint={circlePaint}
-                    //   circleOnClick={this.onClickCircle}
-                    //   symbolLayout={symbolLayout}
-                    //   symbolPaint={symbolPaint}
-                    //   circleOnMouseEnter={this.onClickPoint}
-                    // /> : null
-                }
 
                 <Layer
-                    type="circle"
-                    paint={layerPaint}
-                >
-                    <Feature coordinates={center} />
-                </Layer>
+                    type="symbol"
+                    id="marker"
+                    layout={{ "icon-image": "aquarium-11", "icon-size": 2 }}
 
+                >
+                    {
+                        this.state.timeseries.map((dataPoint, key) => (
+                            <Feature key={key} timeseries={dataPoint} onClick={(e) => this.onClickPoint(dataPoint)} coordinates={[dataPoint.sourceInfo.geoLocation.geogLocation.longitude, dataPoint.sourceInfo.geoLocation.geogLocation.latitude]} />
+                        ))
+                    }
+                </Layer>
+                {this.state.active ?
+                    <Popup coordinates={[this.state.active.sourceInfo.geoLocation.geogLocation.longitude, this.state.active.sourceInfo.geoLocation.geogLocation.latitude]}
+                        anchor={'bottom-left'}
+                        offset={[0, -86]}
+                        onClick={() => {
+                            this.setState({ active: null });
+                        }}>
+                        <pre>stream: {this.state.active.values[0].value[0].value}</pre>
+                    </Popup> : null
+                }
             </Map>
         );
     }
 }
 
-export default MapView;
+export default StreamFlowView;
