@@ -7,7 +7,7 @@ import { get } from "lodash";
 
 const Map = ReactMapboxGl({
     accessToken:
-        process.env.ACCESS_TOKEN
+        process.env.REACT_APP_MAPBOX_TOKEN
 });
 
 const mapStyle = {
@@ -55,7 +55,7 @@ class StreamFlowView extends Component {
         const upperLng = upperBound.lng.toPrecision(3);
         const lowerLat = lowerBound.lat.toPrecision(3);
         const lowerLng = lowerBound.lng.toPrecision(3);
-        axios.get(`http://waterservices.usgs.gov/nwis/iv/?format=json&bBox=${lowerLng},${lowerLat},${upperLng},${upperLat}`)
+        axios.get(`https://waterservices.usgs.gov/nwis/iv/?format=json&bBox=${lowerLng},${lowerLat},${upperLng},${upperLat}`)
             .then(response => {
                 const dataSet = get(response.data.value, "timeSeries");
                 console.log("time series data", dataSet);
@@ -115,6 +115,7 @@ class StreamFlowView extends Component {
                         onClick={() => {
                             this.setState({ active: null });
                         }}>
+                        <h4>{this.state.active.sourceInfo.siteName}</h4>
                         <pre>stream: {this.state.active.values[0].value[0].value}</pre>
                     </Popup> : null
                 }

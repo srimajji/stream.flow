@@ -12,9 +12,11 @@
     "react-scripts": "1.1.5",
     "semantic-ui-css": "^2.3.3",
     "semantic-ui-react": "^0.82.3",
+    "serve": "^10.0.0",
     "togeojson": "^0.16.0"
   },
   "scripts": {
+    "now-start": "serve --single ./build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",

@@ -7,7 +7,7 @@ import { get } from "lodash";
 
 const Map = ReactMapboxGl({
     accessToken:
-        process.env.ACCESS_TOKEN
+        process.env.REACT_APP_MAPBOX_TOKEN
 });
 
 const mapStyle = {
